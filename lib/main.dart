@@ -11,26 +11,34 @@ class MyApp extends StatelessWidget {
       title: 'Startup Name Generator',
       debugShowCheckedModeBanner: false,
       home: RandomWords(),
-      );
+    );
   }
 }
+
 class RandomWords extends StatefulWidget {
   @override
   RandomWordsState createState() => new RandomWordsState();
 }
+
 class RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
   final Set<WordPair> _saved = new Set<WordPair>();
   final _biggerFont = const TextStyle(fontSize: 18.0);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Startup Name Generator'),
+        // action buttons or menu icons on app bar
+        actions: <Widget>[
+          new IconButton(icon: const Icon(Icons.list), onPressed: _pushSaved)
+        ],
       ),
       body: _buildSuggestions(),
     );
   }
+
   Widget _buildSuggestions() {
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
@@ -61,6 +69,7 @@ class RandomWordsState extends State<RandomWords> {
           return _buildRow(_suggestions[index]);
         });
   }
+
   Widget _buildRow(WordPair pair) {
     final bool _alreadySaved = _saved.contains(pair);
     return ListTile(
@@ -69,9 +78,47 @@ class RandomWordsState extends State<RandomWords> {
         style: _biggerFont,
       ),
       trailing: new Icon(
-        _alreadySaved ? Icons.favorite: Icons.favorite_border,
-        color: _alreadySaved ? Colors.red: null,
+        _alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: _alreadySaved ? Colors.red : null,
       ),
+      onTap: () {
+        /*
+          calling setState() triggers a call to the build() method for the State object,
+          resulting in an update to the UI.
+         */
+        setState(() {
+          if (_alreadySaved)
+            _saved.remove(pair);
+          else
+            _saved.add(pair);
+        });
+      },
     );
+  }
+
+  /// This method changes the screen to display the new route.
+  /// The content for the new page is built in MaterialPageRoute's builder property, in an anonymous function
+  void _pushSaved() {
+    Navigator.of(context).push(new MaterialPageRoute<void>(
+        // this returns a Scaffold, containing app for new route
+        builder: (BuildContext context) {
+      final Iterable<ListTile> tiles = _saved.map((WordPair pair) {
+        return new ListTile(
+          title: new Text(
+            pair.asPascalCase,
+            style: _biggerFont,
+          ),
+        );
+      });
+      final List<Widget> divided =
+          ListTile.divideTiles(context: context, tiles: tiles).toList();
+
+      return new Scaffold(
+        appBar: new AppBar(
+          title: const Text('Saved Suggestions'),
+        ),
+        body: new ListView(children: divided),
+      );
+    }));
   }
 }
